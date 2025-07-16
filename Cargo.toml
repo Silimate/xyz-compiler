@@ -1,0 +1,20 @@
+[package]
+name = "xyz-compiler"
+version = "0.0.0"
+authors = ["Martin Povišer"]
+edition = "2021"
+
+[[bin]]
+doc = false
+name = "xyz-compiler"
+path = "src/main.rs"
+
+[dependencies]
+argparse = "0.2.2"
+bumpalo = "3.17.0"
+prjunnamed-generic = { git="https://github.com/povik/prjunnamed.git", branch="xyz" }
+prjunnamed-memory = { git="https://github.com/povik/prjunnamed.git", branch="xyz" }
+prjunnamed-netlist = { git="https://github.com/povik/prjunnamed.git", branch="xyz" }
+prjunnamed-verilogout = { git="https://github.com/povik/prjunnamed.git", branch="xyz" }
+prjunnamed-yosys_json = { git="https://github.com/povik/prjunnamed.git", branch="xyz" }
+regex = "1.11.1"
