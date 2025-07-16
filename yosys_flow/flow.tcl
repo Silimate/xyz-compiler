@@ -21,7 +21,18 @@ proc xyz {} {
 	log -pop
 }
 
-read_rtlil "[lindex $argv 0]"
+set fn "[lindex $argv 0]"
+if {[file extension $fn] == ".il"} {
+	read_rtlil $fn	
+} elseif {[file extension $fn] == ".v"} {
+	read_verilog $fn
+} elseif {[file extension $fn] == ".aig"} {
+	read_aiger -module_name top $fn
+} else {
+	puts "unknown format"
+	exit 1
+}
+
 hierarchy -auto-top
 synth -run :coarse
 memory
@@ -29,3 +40,5 @@ demuxmap
 bwmuxmap
 
 xyz
+
+stat
