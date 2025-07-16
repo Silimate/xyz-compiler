@@ -142,7 +142,8 @@ fn main() {
     ]);
 
     prjunnamed_generic::chain_rebalance(&mut design);
-    prjunnamed_generic::chain_rebalance(&mut design);
+    prjunnamed_generic::canonicalize(&mut design);
+    prjunnamed_generic::tree_rebalance(&mut design);
 
     if !disable_dar_opt {
         eprintln!("Optimizing (DAR)...");
