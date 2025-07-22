@@ -2,7 +2,7 @@
 
 ## Basic Instructions
 
-`xyz` builds into an executable via `cargo build —release`. This `xyz-compiler` repository holds additional components that extend `prjunnamed`.
+`xyz` builds into an executable via `cargo build —-release`. This `xyz-compiler` repository holds additional components that extend `prjunnamed`.
 
 Please see here for an example of Yosys integration: https://github.com/povik/xyz-compiler/blob/main/yosys_flow/flow.tcl.
 
