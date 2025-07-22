@@ -13,3 +13,21 @@ Multipliers, adders, and sequential elements should pass through this procedure 
 This is tested for logic equivalence on the EPFL combinational benchmark: https://github.com/lsils/benchmarks/tree/7770275a0e07a27b8ea9f65b6a3f767282fb8226
 
 Depending on how you use the command you may run into these issues: https://gist.github.com/povik/9c2e4a8ceacce4898fe60cc4863b81b7
+
+## Known `xyz` issues
+
+### Unmapped memories cause a crash
+
+```
+thread 'main' panicked at /Users/pk/.cargo/git/checkouts/prjunnamed-2c5ab51dc1d918c2/946a342/yosys_json/src/import.rs:653:21:
+assertion failed: wr_priority_mask.iter().all(|x| x == Trit::Zero)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ERROR: Return value 101 did not match expected return value 0.
+ERROR: TCL interpreter returned an error: Yosys command produced an error
+```
+
+Requires pre-mapping of memories (via the `memory` pass or a different pass)
+
+### Module level attributes are lost
+
+Modules which roundtrip through the `xyz` command will lose their module level attributes.
