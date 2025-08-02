@@ -34,8 +34,7 @@ if {[file extension $fn] == ".il"} {
 }
 
 hierarchy -auto-top
-synth -run :coarse
-memory
+prep -rdff
 demuxmap
 bwmuxmap
 
