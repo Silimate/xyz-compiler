@@ -4,7 +4,7 @@
 // combinational mapper
 use crate::npn::{npn_semiclass, npn_semiclass_allrepr, Truth6, NPN};
 use crate::sm;
-use crate::target::{SCLTarget, StandardCell};
+use crate::target::{LibraryCell, LibraryPort, SCLTarget};
 use bumpalo::Bump;
 use prjunnamed_netlist::{
     Cell, CellRef, ControlNet, Design, MetaItem, MetaItemRef, Net, TargetCell, Value,
@@ -15,28 +15,33 @@ use std::sync::Arc;
 use MetaItem::{IndexedScope, NamedScope};
 
 struct MapTarget<'a> {
-    cell: &'a StandardCell,
+    cell: &'a LibraryCell,
     via: NPN,
     output: usize,
 }
 
 struct TargetIndex<'a> {
     classes: HashMap<(usize, Truth6), Vec<MapTarget<'a>>>,
-    inverter: &'a StandardCell,
-    tie_lo: (&'a StandardCell, usize),
-    tie_hi: (&'a StandardCell, usize),
+    inverter: &'a LibraryCell,
+    tie_lo: (&'a LibraryCell, usize),
+    tie_hi: (&'a LibraryCell, usize),
     sm_index: sm::TargetIndex<'a>,
 }
 
 impl<'a> TargetIndex<'a> {
     fn create(library: &'a SCLTarget) -> Self {
         let mut ret = HashMap::new();
-        let mut inverter: Option<&'a StandardCell> = None;
-        let mut tie_lo: Option<(&'a StandardCell, usize)> = None;
-        let mut tie_hi: Option<(&'a StandardCell, usize)> = None;
-        let mut tie_hilo: Option<(&'a StandardCell, usize, usize)> = None;
+        let mut inverter: Option<&'a LibraryCell> = None;
+        let mut tie_lo: Option<(&'a LibraryCell, usize)> = None;
+        let mut tie_hi: Option<(&'a LibraryCell, usize)> = None;
+        let mut tie_hilo: Option<(&'a LibraryCell, usize, usize)> = None;
         for (_name, cell) in library.cells.iter() {
-            if let [Some(function)] = &cell.cm_function[..] {
+            let cm_functions = &cell
+                .output_ports
+                .iter()
+                .map(|port| port.cm_function)
+                .collect::<Vec<_>>()[..];
+            if let [Some(function)] = cm_functions {
                 let ninputs = cell.prototype.inputs.len();
                 npn_semiclass_allrepr(*function, ninputs, &mut |map: &NPN| {
                     let target = MapTarget {
@@ -57,7 +62,7 @@ impl<'a> TargetIndex<'a> {
             }
 
             if cell.prototype.inputs.is_empty() {
-                match &cell.cm_function[..] {
+                match cm_functions {
                     [Some(0), Some(1)] => {
                         if tie_hilo.is_none() || cell.area < tie_hilo.unwrap().0.area {
                             tie_hilo = Some((cell, 1, 0));
@@ -1355,12 +1360,15 @@ mod test {
 				cell(and) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "A&B";
 					}
@@ -1368,12 +1376,15 @@ mod test {
 				cell(or) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "A|B";
 					}
@@ -1381,12 +1392,15 @@ mod test {
 				cell(nand) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "!(A&B)";
 					}
@@ -1394,12 +1408,15 @@ mod test {
 				cell(xor) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "(A&!B)|(!A&B)";
 					}
@@ -1407,12 +1424,15 @@ mod test {
 				cell(nor) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "!(A|B)";
 					}
@@ -1420,12 +1440,15 @@ mod test {
 				cell(andnot) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "A&!B";
 					}
@@ -1433,12 +1456,15 @@ mod test {
 				cell(ornot) {
 					area : 3;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "A|!B";
 					}
@@ -1446,9 +1472,11 @@ mod test {
 				cell(not) {
 					area : 1;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "!A";
 					}
@@ -1456,15 +1484,19 @@ mod test {
 				cell(mux) {
 					area: 7;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(S) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "(A&!S)|(B&S)";
 					}
@@ -1472,15 +1504,19 @@ mod test {
 				cell(ao2) {
 					area: 4;
 					pin(A) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(B) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(C) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Y) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "A&(B|C)";
 					}
@@ -1488,10 +1524,12 @@ mod test {
 				cell(tie) {
 					area: 1;
 					pin(LO) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "0";
 					}
 					pin(HI) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "1";
 					}
@@ -1499,16 +1537,20 @@ mod test {
 				cell(ff) {
 					area: 3;
 					pin(D) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(CLK) {
+                        capacitance : 1.0;
 						direction : input;
 					}
 					pin(Q) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "IQ";
 					}
 					pin(QN) {
+                        capacitance : 1.0;
 						direction : output;
 						function : "IQN";
 					}

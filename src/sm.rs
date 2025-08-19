@@ -1,5 +1,5 @@
 // sequential mapper
-use crate::target::{parse_pin, SCLTarget, StandardCell, Statement};
+use crate::target::{parse_pin, LibraryCell, SCLTarget, Statement};
 use prjunnamed_netlist::{Cell, Design, TargetCell, Trit, Value};
 use std::{collections::HashMap, sync::Arc};
 
@@ -72,7 +72,7 @@ impl PinPositions {
 
 #[derive(Debug, Clone)]
 pub struct MapTarget<'a> {
-    cell: &'a StandardCell,
+    cell: &'a LibraryCell,
     features: FeatureSet,
     pub(crate) pins: PinPositions,
 }
@@ -98,7 +98,7 @@ impl<'a> MapTarget<'a> {
     }
 }
 
-fn detect_cell<'a>(cell: &'a StandardCell) -> Option<(FeatureSet, MapTarget<'a>)> {
+fn detect_cell<'a>(cell: &'a LibraryCell) -> Option<(FeatureSet, MapTarget<'a>)> {
     use Statement::{Group, SimpleAttr};
 
     let ff_ast = cell.ast.lookup("ff")?;
@@ -332,12 +332,15 @@ mod test {
 						clocked_on : "CLK" ;
 					}
 					pin(D) {
+                        capacitance: 1.0;
 						direction : input;
 					}
 					pin(CLK) {
+                        capacitance: 1.0;
 						direction : input;
 					}
 					pin(Q) {
+                        capacitance: 1.0;
 						direction : output;
 						function : "IQ" ;
 					}
@@ -349,16 +352,20 @@ mod test {
                         clocked_on : "CLK'" ;
                     }
                     pin(D) {
+                        capacitance: 1.0;
                         direction : input;
                     }
                     pin(CLK) {
+                        capacitance: 1.0;
                         direction : input;
                     }
                     pin(Q) {
+                        capacitance: 1.0;
                         direction : output;
                         function : "IQ" ;
                     }
                     pin(QN) {
+                        capacitance: 1.0;
                         direction : output;
                         function : "IQN" ;
                     }
@@ -372,19 +379,24 @@ mod test {
                         clear : "!RST_N" ;
                     }
                     pin(CLK) {
+                        capacitance: 1.0;
                         direction : input;
                     }
                     pin(RST_N) {
+                        capacitance: 1.0;
                         direction : input;
                     }
                     pin(D) {
+                        capacitance: 1.0;
                         direction : input;
                     }
                     pin(Q) {
+                        capacitance: 1.0;
                         direction : output;
                         function : "IQ" ;
                     }
                     pin(QN) {
+                        capacitance: 1.0;
                         direction : output;
                         function : "IQN" ;
                     }
@@ -497,12 +509,15 @@ mod test {
                         clocked_on : "CLK" ;
                     }
                     pin(D) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(CLK) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(Q) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQ" ;
                     }
@@ -515,19 +530,24 @@ mod test {
                         preset : "!RST_N" ;
                     }
                     pin(CLK) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(RST_N) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(D) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(Q) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQ" ;
                     }
                     pin(QN) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQN" ;
                     }
@@ -541,19 +561,24 @@ mod test {
                         clear : "!RST_N" ;
                     }
                     pin(CLK) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(RST_N) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(D) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(Q) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQ" ;
                     }
                     pin(QN) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQN" ;
                     }
@@ -624,19 +649,24 @@ mod test {
                         clear : "!RST_N" ;
                     }
                     pin(CLK) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(RST_N) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(D) {
+                        capacitance : 1.0;
                         direction : input;
                     }
                     pin(Q) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQ" ;
                     }
                     pin(QN) {
+                        capacitance : 1.0;
                         direction : output;
                         function : "IQN" ;
                     }
