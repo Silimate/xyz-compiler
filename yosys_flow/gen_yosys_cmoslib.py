@@ -93,6 +93,8 @@ for (name, inputs, function, ntransistors) in cell_desc:
 	print(f"      direction : \"output\";")
 	for _, input_name in enumerate(inputs):
 		print("      timing () {")
+		# timing_sense might not be strictly required per the spec but the parser needs it
+		print('        timing_sense : "non_unate";')
 		print(f"        related_pin : \"{input_name}\";")
 		print("        cell_rise (scalar) { values (\"1\"); }")
 		print("        cell_fall (scalar) { values (\"1\"); }")

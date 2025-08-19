@@ -82,6 +82,7 @@ library(yosys_cmoslib) {
       function : "!A";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -100,6 +101,7 @@ library(yosys_cmoslib) {
       function : "A";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -122,6 +124,7 @@ library(yosys_cmoslib) {
       function : "!(A * B)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -129,6 +132,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -151,6 +155,7 @@ library(yosys_cmoslib) {
       function : "!(A | B)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -158,6 +163,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -180,6 +186,7 @@ library(yosys_cmoslib) {
       function : "A * B";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -187,6 +194,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -209,6 +217,7 @@ library(yosys_cmoslib) {
       function : "A | B";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -216,6 +225,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -238,6 +248,7 @@ library(yosys_cmoslib) {
       function : "(A * !B) | (!A * B)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -245,6 +256,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -267,6 +279,7 @@ library(yosys_cmoslib) {
       function : "(A * B) | (!A * !B)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -274,6 +287,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -296,6 +310,7 @@ library(yosys_cmoslib) {
       function : "A * !B";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -303,6 +318,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -325,6 +341,7 @@ library(yosys_cmoslib) {
       function : "A | !B";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -332,6 +349,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -358,6 +376,7 @@ library(yosys_cmoslib) {
       function : "!S * A | S * B";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -365,6 +384,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -372,6 +392,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "S";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -398,6 +419,7 @@ library(yosys_cmoslib) {
       function : "!S * !A | S * !B";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -405,6 +427,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -412,6 +435,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "S";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -438,6 +462,7 @@ library(yosys_cmoslib) {
       function : "!(A * B | C)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -445,6 +470,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -452,6 +478,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "C";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -478,6 +505,7 @@ library(yosys_cmoslib) {
       function : "!((A | B) * C)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -485,6 +513,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -492,6 +521,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "C";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -522,6 +552,7 @@ library(yosys_cmoslib) {
       function : "!(A * B | C * D)";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -529,6 +560,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -536,6 +568,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "C";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -543,6 +576,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "D";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -573,6 +607,7 @@ library(yosys_cmoslib) {
       function : "!((A | B) * (C | D))";
       direction : "output";
       timing () {
+        timing_sense : "non_unate";
         related_pin : "A";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -580,6 +615,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "B";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -587,6 +623,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "C";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
@@ -594,6 +631,7 @@ library(yosys_cmoslib) {
         fall_transition (scalar) { values ("1"); }
       }
       timing () {
+        timing_sense : "non_unate";
         related_pin : "D";
         cell_rise (scalar) { values ("1"); }
         cell_fall (scalar) { values ("1"); }
