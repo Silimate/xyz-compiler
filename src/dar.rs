@@ -140,6 +140,7 @@ struct NwUnderRewrite<'a> {
     structural_index: HashMap<(ControlNet, ControlNet), Net>,
     visited: HashSet<Net>,
     cuts: HashMap<Net, Vec<Cut>>,
+    substituted: HashSet<Net>,
 }
 
 fn cut_union(
@@ -228,6 +229,7 @@ impl<'a> NwUnderRewrite<'a> {
             structural_index,
             cuts: HashMap::new(),
             visited: HashSet::new(),
+            substituted: HashSet::new(),
         }
     }
 
@@ -582,10 +584,13 @@ impl<'a> NwUnderRewrite<'a> {
                 if {
                     let use_counts = self.use_counts.borrow();
                     use_counts.get(&node).copied().unwrap_or(0) == 0
+                        && !self.substituted.contains(&node)
                 } {
                     self.unref(node, &[]);
                 }
             }
+
+            self.substituted.insert(head);
         } else {
             self.cuts.insert(head, out_cuts);
         }
@@ -833,5 +838,38 @@ mod test {
         })
         .unwrap();
         assert_isomorphic!(d, gold);
+    }
+
+    #[test]
+    fn issue5() {
+        let d = parse(None, {
+            r#"
+        %305:1 = input "a305"
+        %306:1 = input "a306"
+        %1581:1 = input "a1581"
+        %3374:1 = input "a3374"
+        %4993:1 = input "a4993"
+        %275:1 = input "a275"
+        %711:1 = input "a711"
+
+        %3175:1 = aig %711 %4993
+        %6:0 = output "keep3175" %3175
+
+        %3373:1 = aig %275 %711
+        %5047:1 = aig %3373 %4993
+
+        %3375:1 = aig !%305 !%5047
+        %782:1 = aig %305 %306
+        %2821:1 = aig %782 %1581
+        %5048:1 = aig %2821 !%3374
+        %5049:1 = aig %5048 !%3375
+
+        %3:0 = output "y" %5049
+        %4:0 = output "keep782" %782
+        %5:0 = output "keep2821" %2821
+        "#
+        })
+        .unwrap();
+        rewrite(&d);
     }
 }
