@@ -1,5 +1,6 @@
 use bumpalo::Bump;
 use prjunnamed_netlist::{Cell, ControlNet, Design, Net, Target, Value};
+use std::process::ExitCode;
 use std::{collections::BTreeMap, fs::File, io::BufWriter, io::Write, sync::Arc};
 use xyz_compiler::target::SCLTarget;
 use xyz_compiler::{cm, sm};
@@ -49,7 +50,7 @@ fn write_output(mut design: Design, filename: String, top_name: String) {
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     let mut input_fn = String::new();
     let mut library_fn = String::new();
     let mut output_fn = String::new();
@@ -103,6 +104,11 @@ fn main() {
         target.import(&mut design).unwrap();
     }
     prjunnamed_generic::unname(&mut design);
+
+    if design.topo_sort().is_none() {
+        eprintln!("Loop detected");
+        return ExitCode::from(1);
+    }
 
     eprintln!("Optimizing...");
     prjunnamed_generic::decision(&mut design);
@@ -199,4 +205,6 @@ fn main() {
 
     eprintln!("Writing result..");
     write_output(design, output_fn, top_name);
+
+    ExitCode::SUCCESS
 }
