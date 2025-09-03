@@ -2,7 +2,8 @@
 // https://people.eecs.berkeley.edu/~alanmi/publications/2006/dac06_rwr.pdf
 
 use crate::npn::{npn_semiclass, npn_semiclass_allrepr, Truth6, NPN};
-use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net};
+use prjunnamed_generic::LevelAnalysis;
+use prjunnamed_netlist::{Cell, CellRef, ControlNet, Design, Net, RewriteRuleset};
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
 
@@ -141,6 +142,7 @@ struct NwUnderRewrite<'a> {
     visited: HashSet<Net>,
     cuts: HashMap<Net, Vec<Cut>>,
     substituted: HashSet<Net>,
+    level_analysis: LevelAnalysis,
 }
 
 fn cut_union(
@@ -230,6 +232,7 @@ impl<'a> NwUnderRewrite<'a> {
             cuts: HashMap::new(),
             visited: HashSet::new(),
             substituted: HashSet::new(),
+            level_analysis: LevelAnalysis::new(),
         }
     }
 
@@ -348,6 +351,13 @@ impl<'a> NwUnderRewrite<'a> {
         ret
     }
 
+    fn add_aig(&self, a: ControlNet, b: ControlNet) -> Net {
+        let cell = Cell::Aig(a, b);
+        let value = self.design.add_cell(cell.clone());
+        self.level_analysis.cell_added(self.design, &cell, &value);
+        value.unwrap_net()
+    }
+
     fn rewrite_inner(&mut self, head: Net, a: ControlNet, b: ControlNet, function: NodeFunction) {
         let mut out_cuts: Vec<Cut> = vec![];
         let empty: Vec<Cut> = vec![];
@@ -439,6 +449,7 @@ impl<'a> NwUnderRewrite<'a> {
                 }
 
                 let current_weight = self.unref(head, structural_cut);
+                let current_level = self.level_analysis.get(head);
 
                 let map = npn_semiclass(f, cut_len);
                 if let Some(structs) = self.structure_index.classes.get(&(cut_len, map.apply(f))) {
@@ -447,28 +458,37 @@ impl<'a> NwUnderRewrite<'a> {
                         // mapping from structure inputs to `cut`
                         let struct_to_cut = (map2 * &map).inv();
                         let struct_ = &self.structure_index.structures[*struct_idx];
-                        let mut nets: Vec<Option<ControlNet>> = (0..cut_len)
+                        let mut nets: Vec<(Option<ControlNet>, u32)> = (0..cut_len)
                             .map(|idx| {
-                                Some(ControlNet::from_net_invert(
-                                    cut[struct_to_cut.p[idx as usize] as usize],
-                                    struct_to_cut.ic[idx as usize],
-                                ))
+                                let net = cut[struct_to_cut.p[idx as usize] as usize];
+                                (
+                                    Some(ControlNet::from_net_invert(
+                                        net,
+                                        struct_to_cut.ic[idx as usize],
+                                    )),
+                                    self.level_analysis.get(net),
+                                )
                             })
                             .collect();
                         for (a, b) in struct_.nodes.iter() {
                             let anet = if *a < 0 {
-                                nets[-*a as usize - 1].map(|cn| !cn)
+                                let (n, l) = nets[-*a as usize - 1];
+                                (n.map(|cn| !cn), l)
                             } else {
                                 nets[*a as usize - 1]
                             };
                             let bnet = if *b < 0 {
-                                nets[-*b as usize - 1].map(|cn| !cn)
+                                let (n, l) = nets[-*b as usize - 1];
+                                (n.map(|cn| !cn), l)
                             } else {
                                 nets[*b as usize - 1]
                             };
-                            let (Some(anet2), Some(bnet2)) = (anet, bnet) else {
+
+                            let level = u32::max(anet.1, bnet.1) + 1;
+
+                            let (Some(anet2), Some(bnet2)) = (anet.0, bnet.0) else {
                                 repl_weight += 1;
-                                nets.push(None);
+                                nets.push((None, level));
                                 continue;
                             };
                             let (in1, in2) = if anet2 > bnet2 {
@@ -478,27 +498,29 @@ impl<'a> NwUnderRewrite<'a> {
                             };
                             let Some(out) = self.structural_index.get(&(in1, in2)) else {
                                 repl_weight += 1;
-                                nets.push(None);
+                                nets.push((None, level));
                                 continue;
                             };
                             let use_counts = self.use_counts.borrow();
                             if use_counts.get(&out).copied().unwrap_or(0) == 0 || head == *out {
                                 repl_weight += 1;
-                                nets.push(None);
+                                nets.push((None, level));
                                 continue;
                             }
-                            nets.push(Some(ControlNet::Pos(*out)));
+                            nets.push((Some(ControlNet::Pos(*out)), level));
                         }
 
-                        let delta = current_weight as i32 - repl_weight as i32;
-                        if delta > 0
+                        let weight_delta = current_weight as i32 - repl_weight as i32;
+                        let level_delta = current_level as i32 - nets.last().unwrap().1 as i32;
+                        if level_delta >= 0
+                            && weight_delta > 0
                             && (best.is_none()
-                                || ((delta > best.as_ref().unwrap().delta)
-                                    || (delta == best.as_ref().unwrap().delta)
+                                || ((weight_delta > best.as_ref().unwrap().delta)
+                                    || (weight_delta == best.as_ref().unwrap().delta)
                                         && (cut_len < best.as_ref().unwrap().cut_len)))
                         {
                             best = Some(Candidate {
-                                delta,
+                                delta: weight_delta,
                                 cut_len,
                                 cut: cut_backing,
                                 structural_cut: scratch,
@@ -521,6 +543,8 @@ impl<'a> NwUnderRewrite<'a> {
             self.unref(head, &candidate.structural_cut);
             let struct_ = &mut self.structure_index.structures[candidate.struct_idx];
             struct_.hit += candidate.delta as usize;
+            let struct_ = &self.structure_index.structures[candidate.struct_idx];
+
             let mut nets: Vec<ControlNet> = (0..struct_.ninputs)
                 .map(|idx| {
                     ControlNet::from_net_invert(
@@ -554,12 +578,12 @@ impl<'a> NwUnderRewrite<'a> {
                     } else {
                         *use_counts.entry(in1.net()).or_insert(0) += 1;
                         *use_counts.entry(in2.net()).or_insert(0) += 1;
-                        node_net = self.design.add_aig(in1, in2);
+                        node_net = self.add_aig(in1, in2);
                     }
                 } else {
                     *use_counts.entry(in1.net()).or_insert(0) += 1;
                     *use_counts.entry(in2.net()).or_insert(0) += 1;
-                    node_net = self.design.add_aig(in1, in2);
+                    node_net = self.add_aig(in1, in2);
                 }
                 self.structural_index.insert((in1, in2), node_net);
                 nets.push(ControlNet::Pos(node_net));
@@ -577,6 +601,7 @@ impl<'a> NwUnderRewrite<'a> {
             }
             assert!(head != new_head.net());
             let new_net = new_head.into_pos(&self.design);
+            self.level_analysis.net_replaced(self.design, head, new_net);
             self.design.replace_net(head, new_net);
 
             // clean up references if any cut leaves are now fully unused
@@ -634,18 +659,21 @@ impl<'a> NwUnderRewrite<'a> {
     }
 
     fn pass(&mut self) {
-        for cell in self.design.iter_cells() {
-            match &*cell.get() {
+        for cell_ref in self.design.iter_cells() {
+            let cell = &*cell_ref.get();
+            self.level_analysis
+                .cell_added(self.design, cell, &cell_ref.output());
+            match cell {
                 Cell::Aig(_, _) | Cell::Xor(_, _) => {
                     if {
                         let use_counts = self.use_counts.borrow_mut();
                         use_counts
-                            .get(&cell.output().unwrap_net())
+                            .get(&cell_ref.output().unwrap_net())
                             .copied()
                             .unwrap_or(0)
                             != 0
                     } {
-                        self.rewrite(cell.output().unwrap_net())
+                        self.rewrite(cell_ref.output().unwrap_net())
                     }
                 }
                 _ => {}
