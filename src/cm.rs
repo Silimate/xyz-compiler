@@ -334,12 +334,12 @@ fn check_support6(t: Truth6, var_idx: usize) -> bool {
 fn remove_invertor(sm_index: &sm::TargetIndex, design: &Design, net: Net) -> ControlNet {
     if let Ok((cell, idx)) = design.find_cell(net) {
         match &*cell.get() {
-            Cell::Not(arg) => return ControlNet::Neg(arg[idx]),
+            Cell::Not(arg) => return !remove_invertor(sm_index, design, arg[idx]),
             Cell::Target(target) => {
                 if let Some(indexed_flop) = sm_index.per_cell.get(&target.kind) {
                     if Some(idx) == indexed_flop.pins.data_negated_out {
                         let data_out = indexed_flop.pins.data_out.unwrap();
-                        return ControlNet::Neg(cell.output()[data_out]);
+                        return !remove_invertor(sm_index, design, cell.output()[data_out]);
                     }
                 }
             }
