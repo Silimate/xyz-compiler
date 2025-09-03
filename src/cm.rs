@@ -173,6 +173,7 @@ struct Node<'a> {
     matches: &'a [Match],
     fid: FrontierSlot,
     pol: [NodePolarity<'a>; 2],
+    visited: bool,
 }
 
 impl<'a> Node<'a> {
@@ -183,6 +184,7 @@ impl<'a> Node<'a> {
             matches: &[],
             fid: 0,
             pol: [NodePolarity::default(); 2],
+            visited: false,
         }
     }
 
@@ -193,6 +195,7 @@ impl<'a> Node<'a> {
             matches: &[],
             fid: 0,
             pol: [NodePolarity::default(); 2],
+            visited: false,
         }
     }
     fn guts() -> Self {
@@ -202,6 +205,7 @@ impl<'a> Node<'a> {
             matches: &[],
             fid: 0,
             pol: [NodePolarity::default(); 2],
+            visited: false,
         }
     }
 }
@@ -549,12 +553,51 @@ impl<'a> Mapping<'a> {
         }
     }
 
-    fn frontier(&mut self) -> usize {
-        // TODO: implement nontrivially
-        for (i, node) in self.nodes.values_mut().enumerate() {
-            node.fid = i as FrontierSlot + 1;
+    fn frontier(&mut self, target_index: &TargetIndex) -> usize {
+        let mut size: usize = 1;
+        let mut free_indices: Vec<FrontierSlot> = vec![];
+
+        for node in self.nodes.values_mut() {
+            node.visited = false;
+            node.fid = 0;
         }
-        self.nodes.len() + 1
+
+        for cell in self.design.iter_cells_topo().rev() {
+            for net in cell.output().iter() {
+                let Some(node) = self.nodes.get_mut(&net) else {
+                    continue;
+                };
+                let fanins = match node.role {
+                    Pi(_) => vec![],
+                    Guts => {
+                        let (_, args) = decode_node(&target_index.sm_index, self.design, net);
+                        args
+                    }
+                };
+
+                let node_fid = node.fid;
+                node.visited = true;
+
+                for fanin in fanins {
+                    let Some(fanin_node) = self.nodes.get_mut(&fanin.net()) else {
+                        continue;
+                    };
+                    assert!(!fanin_node.visited);
+                    if fanin_node.fid == 0 {
+                        fanin_node.fid = free_indices.pop().unwrap_or_else(|| {
+                            size += 1;
+                            (size - 1) as FrontierSlot
+                        });
+                    }
+                }
+
+                if node_fid != 0 {
+                    free_indices.push(node_fid);
+                }
+            }
+        }
+
+        size
     }
 
     fn prepare_matches(
@@ -683,7 +726,7 @@ impl<'a> Mapping<'a> {
 
         let mut pcuts_all: Vec<PriorityCut> = Vec::new();
         let mut cache_all: Vec<NodeCache> = Vec::new();
-        let frontier_size = self.frontier();
+        let frontier_size = self.frontier(target_index);
         pcuts_all.resize(
             npriority_cuts * frontier_size,
             PriorityCut {
