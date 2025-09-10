@@ -563,7 +563,7 @@ impl<'a> Mapping<'a> {
         }
 
         for cell in self.design.iter_cells_topo().rev() {
-            for net in cell.output().iter() {
+            for net in cell.output().iter().rev() {
                 let Some(node) = self.nodes.get_mut(&net) else {
                     continue;
                 };
@@ -1766,5 +1766,26 @@ mod test {
         })
         .unwrap();
         assert_isomorphic!(d, gold);
+    }
+
+    #[test]
+    fn test_frontier_multibit() {
+        let target = prep_test_library1();
+        let mut d = parse(Some(target.clone()), {
+            r#"
+        %0:1 = input "a"
+        %1:1 = input "b"
+        %2:1 = input "c"
+        %3:1 = input "d"
+        %4:2 = or [%0 %1] [%2 %3]
+        %6:1 = xor %0 %4+0
+        %7:1 = xor %1 %4+1
+        %8:0 = output "x" %6
+        %9:0 = output "y" %7
+        "#
+        })
+        .unwrap();
+        map(&d, target.clone());
+        d.compact();
     }
 }
