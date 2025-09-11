@@ -1,5 +1,8 @@
 use bumpalo::Bump;
-use prjunnamed_netlist::{Cell, ControlNet, Design, Net, Target, Value};
+use prjunnamed_netlist::{
+    Cell, ControlNet, Design, MetaItemRef, Net, RewriteResult, RewriteRuleset, Rewriter, Target,
+    Value,
+};
 use std::process::ExitCode;
 use std::{collections::BTreeMap, fs::File, io::BufWriter, io::Write, sync::Arc};
 use xyz_compiler::target::SCLTarget;
@@ -23,6 +26,49 @@ fn read_input(target: Option<Arc<dyn Target>>, filename: String) -> (Design, Str
         return (designs.into_values().next().unwrap(), top_name);
     } else {
         panic!("unrecognized file type: {filename}")
+    }
+}
+
+pub struct LowerArithWithConstOperand;
+
+impl RewriteRuleset for LowerArithWithConstOperand {
+    fn rewrite<'a>(
+        &self,
+        cell: &Cell,
+        meta: MetaItemRef<'a>,
+        output: Option<&Value>,
+        rewriter: &Rewriter<'a>,
+    ) -> RewriteResult<'a> {
+        match cell {
+            &Cell::Mul(ref a, ref b) if (a.as_const().is_some() || b.as_const().is_some()) => {
+                return prjunnamed_generic::LowerMul {}.rewrite(cell, meta, output, rewriter);
+            }
+            &Cell::Adc(ref arg1, ref arg2, ref cell_ci)
+                if (arg1.as_const().is_some() || arg2.as_const().is_some()) =>
+            {
+                let mut ci: Net = *cell_ci;
+
+                let value = (0..arg1.len())
+                    .map(|idx| {
+                        let a = arg1[idx];
+                        let b = arg2[idx];
+                        let ab = rewriter.add_cell(Cell::Xor(a.into(), b.into()));
+                        let ret = rewriter
+                            .add_cell(Cell::Xor(ab.clone(), ci.into()))
+                            .unwrap_net();
+                        ci = rewriter
+                            .add_cell(Cell::Or(
+                                rewriter.add_cell(Cell::And(a.into(), b.into())),
+                                rewriter.add_cell(Cell::And(ci.into(), ab)),
+                            ))
+                            .unwrap_net();
+                        ret
+                    })
+                    .collect::<Value>();
+                value.concat(ci).into()
+            }
+            _ => RewriteResult::None,
+        }
     }
 }
 
@@ -115,16 +161,32 @@ fn main() -> ExitCode {
     prjunnamed_generic::canonicalize(&mut design);
 
     if no_lower_arith {
-        design.rewrite(&[
-            &prjunnamed_generic::LowerLt,
-            &prjunnamed_generic::LowerShift,
-        ]);
+        loop {
+            eprintln!("Tick...");
+            let did_rewrite = design.rewrite(&[
+                &prjunnamed_generic::LowerLt,
+                &prjunnamed_generic::LowerShift,
+                &LowerArithWithConstOperand,
+            ]);
+            if !did_rewrite {
+                break;
+            }
+            prjunnamed_generic::canonicalize(&mut design);
+        }
     } else {
-        design.rewrite(&[
-            &prjunnamed_generic::LowerLt,
-            &prjunnamed_generic::LowerMul,
-            &prjunnamed_generic::LowerShift,
-        ]);
+        loop {
+            eprintln!("Tick...");
+            let did_rewrite = design.rewrite(&[
+                &prjunnamed_generic::LowerLt,
+                &prjunnamed_generic::LowerShift,
+                &prjunnamed_generic::LowerMul,
+                &LowerArithWithConstOperand,
+            ]);
+            if !did_rewrite {
+                break;
+            }
+            prjunnamed_generic::canonicalize(&mut design);
+        }
     }
 
     // Fix up for limitation of Yosys export
