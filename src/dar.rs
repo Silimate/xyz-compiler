@@ -258,6 +258,9 @@ impl<'a> NwUnderRewrite<'a> {
         }
         let mut nnodes = 1;
         for fanin in &[in1.net(), in2.net()] {
+            if fanin.is_const() {
+                continue;
+            }
             if {
                 let mut use_counts = self.use_counts.borrow_mut();
                 let nrefs = use_counts.get_mut(fanin).unwrap();
@@ -295,6 +298,9 @@ impl<'a> NwUnderRewrite<'a> {
         }
 
         for fanin in &[in1.net(), in2.net()] {
+            if fanin.is_const() {
+                continue;
+            }
             if {
                 let mut use_counts = self.use_counts.borrow_mut();
                 let nrefs = use_counts.get_mut(fanin).unwrap();
@@ -377,17 +383,31 @@ impl<'a> NwUnderRewrite<'a> {
         for ia in (-1)..(cuts_a.len() as i32) {
             'next_cut: for ib in (-1)..(cuts_b.len() as i32) {
                 let cut1 = if ia == -1 {
-                    &Cut {
-                        leaves: cut_from_slice(&[a.net()]),
-                        function: 2,
+                    if a.net().is_const() {
+                        &Cut {
+                            leaves: cut_from_slice(&[]),
+                            function: (a.net() == Net::ONE) as u64,
+                        }
+                    } else {
+                        &Cut {
+                            leaves: cut_from_slice(&[a.net()]),
+                            function: 2,
+                        }
                     }
                 } else {
                     cuts_a.get(ia as usize).unwrap()
                 };
                 let cut2 = if ib == -1 {
-                    &Cut {
-                        leaves: cut_from_slice(&[b.net()]),
-                        function: 2,
+                    if b.net().is_const() {
+                        &Cut {
+                            leaves: cut_from_slice(&[]),
+                            function: (b.net() == Net::ONE) as u64,
+                        }
+                    } else {
+                        &Cut {
+                            leaves: cut_from_slice(&[b.net()]),
+                            function: 2,
+                        }
                     }
                 } else {
                     cuts_b.get(ib as usize).unwrap()
@@ -594,7 +614,9 @@ impl<'a> NwUnderRewrite<'a> {
                 let mut use_counts = self.use_counts.borrow_mut();
                 *use_counts.entry(new_head.net()).or_insert(0) += 1;
             }
-            self.structural_index.remove(&(a, b));
+            if !struct_.nodes.is_empty() {
+                self.structural_index.remove(&(a, b));
+            }
 
             if candidate.map.oc {
                 new_head = !new_head;

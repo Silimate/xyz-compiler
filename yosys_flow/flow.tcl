@@ -28,6 +28,8 @@ if {[file extension $fn] == ".il"} {
 	read_verilog $fn
 } elseif {[file extension $fn] == ".aig"} {
 	read_aiger -module_name top $fn
+} elseif {[file extension $fn] == ".json"} {
+	read_json $fn
 } else {
 	puts "unknown format"
 	exit 1
